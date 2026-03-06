@@ -852,38 +852,41 @@ function hitungEstimasi() {
             }
             break;
 
-        case 'gugatan':
-            let isGEcourt = document.getElementById('gugatanEcourt').checked, isGManual = document.getElementById('gugatanManual').checked, isCT = document.getElementById('ceraiTalak').checked;
-            let hasP = dataPihak.some(p => p.jenis === 'Penggugat'), hasT = dataPihak.some(p => p.jenis === 'Tergugat' || p.jenis === 'Turut Tergugat');
-            let bRP = 0, bRT = 0, isGh = false;
+case 'gugatan':
+            let isGEcourt = document.getElementById('gugatanEcourt').checked;
+            let isGManual = document.getElementById('gugatanManual').checked;
+            let isCT = document.getElementById('ceraiTalak').checked;
+            let hasP = dataPihak.some(p => p.jenis === 'Penggugat');
+            let hasT = dataPihak.some(p => p.jenis === 'Tergugat' || p.jenis === 'Turut Tergugat');
+            
             if (!hasP || !hasT) { alert("Harap isi Pihak Penggugat/Pemohon dan Tergugat/Termohon!"); return; }
-            dataPihak.forEach(p => { 
-                let curR = isGManual && p.lokasi === 'DN' ? (p.isRadius1 ? 200000 : 250000) : p.radius;
-                if (p.jenis === 'Penggugat') bRP += curR; else { if (p.lokasi === 'GHOIB') isGh = true; else bRT += curR; }
-            });
+
             if (isGEcourt) {
-                let pnbpRel = 20000 * jumlahData, pnbpPut = 10000 * jumlahData;
-                if (isGh) {
-                    grandTotal = pendaftaran + atk + pnbpRel + 40000 + redaksi + materai + 20000 + pnbpPut + 10000 + 10000 + 630000 + 270000;
-                    htmlDetail = `<tr><td colspan="2" class="fw-bold bg-light">GUGATAN E-COURT (GHOIB)</td></tr>
-                        <tr><td>1-2. Pendaftaran & ATK</td><td class="text-end">Rp 180.000</td></tr>
-                        <tr><td>5. PNBP Relaas P dan T (${jumlahData} Pihak)</td><td class="text-end">Rp ${pnbpRel.toLocaleString('id-ID')}</td></tr>
-                        <tr><td>6. Relaas T Massmedia 2x</td><td class="text-end fw-bold text-success">Rp 630.000</td></tr>
-                        <tr><td>15. Putusan T Massmedia</td><td class="text-end fw-bold text-success">Rp 270.000</td></tr>`;
-                } else {
-                    grandTotal = pendaftaran + atk + bRT + pnbpRel + 40000 + redaksi + materai + 20000 + pnbpPut + 10000 + 10000;
-                    htmlDetail = `<tr><td colspan="2" class="fw-bold bg-light">GUGATAN E-COURT</td></tr>
-                        <tr><td>1-2. Pendaftaran & ATK</td><td class="text-end">Rp 180.000</td></tr>
-                        <tr><td>4. Relaas T Tercatat</td><td class="text-end fw-bold text-success">Rp ${bRT.toLocaleString('id-ID')}</td></tr>`;
-                }
-            } else {
-                let totalPang = (bRP * 2) + (isGh ? 630000 : bRT * 3), bPBT = isGh ? 270000 : bRT * 1;
-                grandTotal = pendaftaran + atk + 30000 + totalPang + redaksi + materai + 10000 + bPBT + (isCT ? (bRP * 1 + (isGh ? 315000 : bRT * 1)) : 0);
-                htmlDetail = `<tr><td colspan="2" class="fw-bold bg-light">${isCT ? 'CERAI TALAK' : 'CERAI GUGAT'} MANUAL</td></tr>
-                    <tr><td>4. Panggilan 2x/3x</td><td class="text-end fw-bold text-success">Rp ${totalPang.toLocaleString('id-ID')}</td></tr>
-                    <tr><td>8. Putusan</td><td class="text-end fw-bold text-success">Rp ${bPBT.toLocaleString('id-ID')}</td></tr>`;
-            }
-            break;
+                let pnbpRel = 20000 * jumlahData;
+                let hasLN = dataPihak.some(p => p.lokasi === 'LN');
+                let isGh = dataPihak.some(p => p.lokasi === 'GHOIB');
+                
+                // Variabel Tambahan Khusus sesuai Dokumen e-SKUM LN
+                let bRT = 0;
+                dataPihak.forEach(p => { if (p.jenis !== 'Penggugat' && p.lokasi !== 'GHOIB') bRT += p.radius; });
+
+                if (hasLN) {
+                    // Logika Presisi untuk Luar Negeri (Total Rp 5.468.000)
+                    const biayaMediasi = 40000;         // Poin 6
+                    const pnbpPemberitahuan = 20000;    // Poin 10
+                    const pnbpPutusan = 20000;          // Poin 11
+                    const pnbpPencabutan = 10000;       // Poin 12
+                    const regKuasa = 10000;             // Poin 13
+                    
+                    grandTotal = pendaftaran + atk + bRT + pnbpRel + biayaMediasi + redaksi + materai + pnbpPemberitahuan + pnbpPutusan + pnbpPencabutan + regKuasa;
+
+                    htmlDetail = `<tr><td colspan="2" class="fw-bold bg-light">GUGATAN E-COURT (LUAR NEGERI)</td></tr>
+                        <tr><td>1. Pendaftaran</td><td class="text-end">Rp 30.000</td></tr>
+                        <tr><td>2. ATK / Biaya Proses</td><td class="text-end">Rp 150.000</td></tr>
+                        <tr><td>4. Relaas T Tercatat (Luar Negeri)</td><td class="text-end fw-bold text-success">Rp ${bRT.toLocaleString('id-ID')}</td></tr>
+                        <tr><td>5. PNBP Relaas P & T</td><td class="text-end">Rp ${pnbpRel.toLocaleString('id-ID')}</td></tr>
+                        <tr><td>6. Biaya Panggilan Mediasi</td><td class="text-end">Rp 40.000</td></tr>
+                        <tr><td>8-9. Redaksi & Materai</td><td class="text-end">Rp 20.000</td></tr>
         case 'banding':
             let isBandE = document.getElementById('bandingEcourt').checked;
             let hasBandP = dataPihak.some(p => p.jenis === 'Pembanding'), hasBandT = dataPihak.some(p => p.jenis === 'Terbanding');
@@ -959,4 +962,5 @@ function hitungEstimasi() {
 window.onload = function() { resetPihak(); };
 </script>
 </body>
+
 </html>
